@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Timer struct {
@@ -58,6 +59,22 @@ func newTimer(name string, duration string) *Timer {
 	return &t1
 }
 
+func poormodorTicker(done *chan bool, ticker *time.Ticker, startTime *time.Time) {
+	for {
+		select {
+		case <-*done:
+			return
+		case t := <-ticker.C:
+			diff := startTime.Sub(t)
+			fmt.Printf("\r %s", diff.String())
+		}
+	}
+}
+
+func getInitialTime() {
+
+}
+
 func main() {
 	var (
 		name     string
@@ -69,9 +86,21 @@ func main() {
 
 	flag.Parse()
 
-	fmt.Println("duration", duration)
+	startTime := time.Now()
 
 	t1 := newTimer(name, duration)
 
-	fmt.Printf("My new timer is called %s and it will run for %ds\n", t1.name, t1.duration)
+	ticker := time.NewTicker(500 * time.Millisecond)
+
+	fmt.Printf("Timer %s will run for %ds\n", t1.name, t1.duration)
+
+	done := make(chan bool)
+
+	go poormodorTicker(&done, ticker, &startTime)
+
+	time.Sleep(time.Duration(t1.duration) * time.Second)
+	ticker.Stop()
+	done <- true
+
+	fmt.Printf("Timer %s has stopped\n", t1.name)
 }
