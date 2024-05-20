@@ -42,13 +42,10 @@ func parseDurationText(text string) int {
 func newTimer(name string, duration string) *Timer {
 	durationArr := strings.Split(duration, " ")
 
-	fmt.Println(durationArr)
-
 	completeDur := 0
 
 	for i := range len(durationArr) {
 		durText := durationArr[i]
-		fmt.Printf("Parsing %s\n", durText)
 		dur := parseDurationText(durText)
 
 		completeDur += dur
@@ -65,14 +62,13 @@ func poormodorTicker(done *chan bool, ticker *time.Ticker, startTime *time.Time)
 		case <-*done:
 			return
 		case t := <-ticker.C:
-			diff := startTime.Sub(t)
-			fmt.Printf("\r %s", diff.String())
+			diff := t.Sub(*startTime)
+			hours := int32(diff.Hours())
+			minutes := int32(diff.Minutes()) % 60
+			seconds := int32(diff.Seconds()) % 60
+			fmt.Printf("\r▶ [%dh %dm %ds] ", hours, minutes, seconds)
 		}
 	}
-}
-
-func getInitialTime() {
-
 }
 
 func main() {
@@ -92,15 +88,15 @@ func main() {
 
 	ticker := time.NewTicker(500 * time.Millisecond)
 
-	fmt.Printf("Timer %s will run for %ds\n", t1.name, t1.duration)
+	fmt.Printf("▶ %s will run for %ds ⏰\n", t1.name, t1.duration)
 
 	done := make(chan bool)
 
 	go poormodorTicker(&done, ticker, &startTime)
 
 	time.Sleep(time.Duration(t1.duration) * time.Second)
-	ticker.Stop()
+	defer ticker.Stop()
 	done <- true
 
-	fmt.Printf("Timer %s has stopped\n", t1.name)
+	fmt.Printf("\n▶ %s has stopped ✅\n", t1.name)
 }
